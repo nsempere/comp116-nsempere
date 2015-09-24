@@ -68,7 +68,8 @@ set3.pcap
 	    I had trouble finding the domains for most of these IP addresses. I attempted to determine
 	    the domains using both nslookup and the address resolution tool in wireshark.
 	17. Of the three non-generic/anonymous logins I found, only one was legitimate.
-	18. See included markdown file IP_Domain.md for a full table.
+	18. See included markdown file IP_Domain.md for a full table. I obtained this table by using 
+	    the address resolution tool supported by wireshark.
 	19. I was able to verify whether or not a username/password pair was successful or not by
 	    examining the TCP streams for those interaction. The IMAP login indicated a successful
 	    login in plain text, while I was able to confirm that the two HTTP logins were invalid
