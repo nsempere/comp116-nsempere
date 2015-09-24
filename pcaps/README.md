@@ -1,4 +1,4 @@
-Nicolas Sempere
+Ncolas Sempere
 22 September 2015
 
 				Packet Sleuth
@@ -26,7 +26,9 @@ set1.pcap
 		- CLu-mOMWoAAgjkr.jpg
 		- CNsAEaYUYAARuaj.jpg
 		- COaqQWnU8AAwX3K.jpg
- 
+	   
+	   On another pretty funny note, I was able to sniff out some computer that made a
+	   request for an "adult" website. Reading through that HTML was pretty bad.  
 	9. See attached files
 
 set2.pcap
@@ -63,6 +65,8 @@ set3.pcap
 		- IP: 192.168.15.12 PORT: 161 Protocol: SNMP 
 		- IP: 210.131.4.155 PORT 143 Protocol: IMAP 
 
+	    I had trouble finding the domains for most of these IP addresses. I attempted to determine
+	    the domains using both nslookup and the address resolution tool in wireshark.
 	17. Of the three non-generic/anonymous logins I found, only one was legitimate.
 	18. See included markdown file IP_Domain.md for a full table.
 	19. I was able to verify whether or not a username/password pair was successful or not by
