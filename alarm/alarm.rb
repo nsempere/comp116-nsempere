@@ -3,6 +3,7 @@
 require 'packetfu'
 
 def scanCheck(pkt, num)
+
 	flags = pkt.tcp_flags
 	if flags.all? {|flag| flag == 0}
 		puts "#{num}. ALERT: NULL scan is detected from #{pkt.ip_saddr} (#{pkt.proto.last}) (#{pkt.payload})"
@@ -18,19 +19,22 @@ def scanCheck(pkt, num)
 		puts "#{num}. ALERT: Nmap scan is detected from  #{pkt.ip_saddr} (#{pkt.proto.last}) (#{pkt.payload})"
 	elsif pkt.payload.match(/\x4E\x69\x6B\x74\x6F/)
 		puts "#{num}. ALERT: Nikto scan is detected from #{pkt.ip_saddr} (#{pkt.proto.last}) (#{pkt.payload})"
+	elsif (pkt.payload.match(/5\d{3}(\s|-)?\d{4}(\s|-)?\d{4}(\s|-)?\d{4}/) or
+	       pkt.payload.match(/6011(\s|-)?\d{4}(\s|-)?\d{4}(\s|-)?\d{4}/) or
+	       pkt.payload.match(/3\d{3}(\s|-)?\d{6}(\s|-)?\d{5}/))
+		puts "#{logNum}. ALERT: Credit card leaked in the clear from #{line.match(rgxIP)} (#{line.match(rgxProto)}) (#{line})"
+		
 	end
 end
 
 def liveStreamDetector(packetArray)
+
 	counter = 0
 	packetArray.stream.each do |raw|
 		counter += 1
 		packet = PacketFu::Packet.parse(raw)
 		if packet.is_tcp?
-			#flags = packet.tcp_flags
 			scanCheck(packet, counter)		
-		elsif packet.is_a?(PacketFu::IPPacket)
-			puts "still exciting"
 		end 
 	end
 end
@@ -38,6 +42,7 @@ end
 
 #What sort of object am I expecting to come in?
 def reviewLog(log)
+
 	logNum = 0
 	rgxIP = "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
 	rgxProto = "(?:(((T|S)CP)|(S?)(HT|F)?(TP(S?))))"
@@ -55,6 +60,8 @@ def reviewLog(log)
 			puts "#{logNum}. ALERT: Attemted phpMyAdmin access is detected from #{line.match(rgxIP)} (#{line.match(rgxProto)}) (#{line})"
 		elsif line.match(/(\\x[a-zA-Z0-9]{2})+/)
 			puts "#{logNum}. ALERT: Attemted shellcode injection is detected from #{line.match(rgxIP)} (#{line.match(rgxProto)}) (#{line})"
+		elsif line.match(/masscan/)
+			puts "#{logNum}. ALERT: Attempted use of masscan is detected from #{line.match(rgxIP)} (#{line.match(rgxProto)}) (#{line})"
 		end
 	end
 end
