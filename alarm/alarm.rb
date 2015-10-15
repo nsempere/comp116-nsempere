@@ -2,27 +2,25 @@
 
 require 'packetfu'
 
-def scanCheck(packet, count)
-	flags = packet.tcp_flags
-	puts packet.payload
-	if packet.payload.to_s.match(/\x4E\x6D\x61\x70/)
-		puts "This was an Nmap scan of some sort or another"
-	elsif flags.all? {|flag| flag == 0}
-		puts "#{count}. ALERT: NULL scan is detected"
+def scanCheck(pkt, num)
+	flags = pkt.tcp_flags
+	if flags.all? {|flag| flag == 0}
+		puts "#{num}. ALERT: NULL scan is detected from #{pkt.ip_saddr} (#{pkt.proto.last}) (#{pkt.payload})"
 	elsif flags.urg == 0 and flags.ack == 0 and 
 	      flags.psh == 0 and flags.rst == 0 and
 	      flags.fin == 1
-		puts "#{count}. ALERT: FIN scan is detected"	
+		puts "#{num}. ALERT: FIN scan is detected from #{pkt.ip_saddr} (#{pkt.proto.last}) (#{pkt.payload})"	
 	elsif flags.urg == 1 and flags.ack == 0 and 
 	      flags.psh == 1 and flags.rst == 0 and
 	      flags.fin == 1
-		puts "#{count}. ALERT: XMAS scan is detected"
-	elsif packet.payload.match(/\x4E\x6D\x61\x70/)
-		puts "#{count}. ALERT: Nmap scan is detected"
-	elsif packet.payload.match(/\x4E\x69\x6B\x74\x6F/)
-		puts "#{count}. ALERT: Nikto scan is detected"
+		puts "#{num}. ALERT: XMAS scan is detected from #{pkt.ip_saddr} (#{pkt.proto.last}) (#{pkt.payload})"
+	elsif pkt.payload.match(/\x4E\x6D\x61\x70/)
+		puts "#{num}. ALERT: Nmap scan is detected from  #{pkt.ip_saddr} (#{pkt.proto.last}) (#{pkt.payload})"
+	elsif pkt.payload.match(/\x4E\x69\x6B\x74\x6F/)
+		puts "#{num}. ALERT: Nikto scan is detected from #{pkt.ip_saddr} (#{pkt.proto.last}) (#{pkt.payload})"
 	end
 end
+
 def liveStreamDetector(packetArray)
 	counter = 0
 	packetArray.stream.each do |raw|
@@ -40,19 +38,23 @@ end
 
 #What sort of object am I expecting to come in?
 def reviewLog(log)
-	logNumber = 0
+	logNum = 0
+	rgxIP = "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
+	rgxProto = "(?:(((T|S)CP)|(S?)(HT|F)?(TP(S?))))"
 	File.open(log).each do |line|
-		logNumber += 1
+		logNum += 1
 		if line.match(/\x4E\x6D\x61\x70/)
-			puts "#{logNumber}. ALERT: Nmap scan detected from <IP-ADDRESS>"
+			puts "#{logNum}. ALERT: Nmap scan is detected from #{line.match(rgxIP)} (#{line.match(rgxProto)}) (#{line})"
 		elsif line.match(/\x4E\x69\x6B\x74\x6F/)
-			puts "#{logNumber}. ALERT: Nikto scan detected from <IP-ADDRESS>"
+			puts "#{logNum}. ALERT: Nikto scan is detected from #{line.match(rgxIP)} (#{line.match(rgxProto)}) (#{line})"
 		elsif (line.match(/5\d{3}(\s|-)?\d{4}(\s|-)?\d{4}(\s|-)?\d{4}/) or
 		       line.match(/6011(\s|-)?\d{4}(\s|-)?\d{4}(\s|-)?\d{4}/) or
 		       line.match(/3\d{3}(\s|-)?\d{6}(\s|-)?\d{5}/))
-			puts "#{logNumber}. ALERT: Credit card leaked in the clear from <IP-ADDRESS>"
+			puts "#{logNum}. ALERT: Credit card leaked in the clear from #{line.match(rgxIP)} (#{line.match(rgxProto)}) (#{line})"
 		elsif line.match("phpMyAdmin")
-			puts "#{logNumber}. ALERT: something something phpMyAdmin"
+			puts "#{logNum}. ALERT: Attemted phpMyAdmin access is detected from #{line.match(rgxIP)} (#{line.match(rgxProto)}) (#{line})"
+		elsif line.match(/(\\x[a-zA-Z0-9]{2})+/)
+			puts "#{logNum}. ALERT: Attemted shellcode injection is detected from #{line.match(rgxIP)} (#{line.match(rgxProto)}) (#{line})"
 		end
 	end
 end
